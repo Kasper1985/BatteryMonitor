@@ -6,7 +6,7 @@
 //
 
 import Testing
-@testable import BluetoothBatteryMonitor
+@testable import Battery_Monitor
 
 struct BluetoothBatteryMonitorTests {
 
