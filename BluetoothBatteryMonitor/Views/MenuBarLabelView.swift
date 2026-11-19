@@ -5,44 +5,21 @@
 
 import SwiftUI
 
-/// Compact, colored label shown in the macOS menu bar.
-struct MenuBarLabelView: View {
-    
-    let viewModel: BatteryViewModel
-    
-    @AppStorage(RefreshSettings.intervalKey)
-    private var refreshInterval = RefreshSettings.defaultInterval
-    
-    var body: some View {
-        label
-            .task(id: refreshInterval) {
-                guard refreshInterval > 0 else { return }
-                
-                // Restarts automatically when the interval setting changes
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(refreshInterval))
-                    guard !Task.isCancelled else { break }
-                    viewModel.refresh()
-                }
-            }
-    }
-    
-    @ViewBuilder
-    private var label: some View {
-        let items = viewModel.menuBarItems
-        
-        if items.isEmpty {
-            Image(systemName: "battery.100percent")
-        } else if let image = renderedImage(for: items) {
-            Image(nsImage: image)
-        } else {
-            Text(items.map { $0.percentage.map { "\($0)%" } ?? "?" }.joined(separator: " "))
-        }
-    }
-    
+/// Renders the selected devices into a compact, colored menu bar image.
+enum MenuBarLabelView {
     /// The menu bar only keeps colors for non-template images, so the label is rendered to a bitmap.
-    private func renderedImage(for items: [MenuBarItem]) -> NSImage? {
-        let missingColor = Self.missingColor(for: viewModel.refreshStatus)
+    static func statusImage(for viewModel: BatteryViewModel) -> NSImage? {
+        let items = viewModel.menuBarItems
+        if items.isEmpty {
+            let image = NSImage(systemSymbolName: "battery.100percent", accessibilityDescription: "Battery Monitor")
+            image?.isTemplate = true
+            return image
+        }
+        return renderedImage(for: items, refreshStatus: viewModel.refreshStatus)
+    }
+
+    private static func renderedImage(for items: [MenuBarItem], refreshStatus: RefreshStatus) -> NSImage? {
+        let missingColor = missingColor(for: refreshStatus)
         
         let content = HStack(spacing: 8) {
             ForEach(items) { item in
