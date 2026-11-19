@@ -41,7 +41,7 @@ struct ContentView: View {
             // Device list
             if viewModel.isLoading && viewModel.devices.isEmpty {
                 ProgressView("Reading battery levels...")
-            } else if let error = viewModel.errorMessage {
+            } else if let error = viewModel.errorMessage, viewModel.devices.isEmpty {
                 ContentUnavailableView(
                     "Unable to read batteries",
                     systemImage: "battery.0",
@@ -71,6 +71,11 @@ struct ContentView: View {
                 if viewModel.isLoading {
                     ProgressView()
                         .controlSize(.small)
+                }
+                
+                if viewModel.refreshStatus == .failed, !viewModel.devices.isEmpty {
+                    Label("Last refresh failed", systemImage: "exclamationmark.triangle")
+                        .help(viewModel.errorMessage ?? "")
                 }
                 
                 if let lastUpdated = viewModel.lastUpdated {

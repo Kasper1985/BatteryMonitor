@@ -29,31 +29,36 @@ struct MenuBarLabelView: View {
     
     @ViewBuilder
     private var label: some View {
-        let devices = viewModel.menuBarDevices
+        let items = viewModel.menuBarItems
         
-        if devices.isEmpty {
+        if items.isEmpty {
             Image(systemName: "battery.100percent")
-        } else if let image = renderedImage(for: devices) {
+        } else if let image = renderedImage(for: items) {
             Image(nsImage: image)
         } else {
-            Text(devices.map { "\($0.percentage)%" }.joined(separator: " "))
+            Text(items.map { $0.percentage.map { "\($0)%" } ?? "?" }.joined(separator: " "))
         }
     }
     
     /// The menu bar only keeps colors for non-template images, so the label is rendered to a bitmap.
-    private func renderedImage(for devices: [BatteryDevice]) -> NSImage? {
+    private func renderedImage(for items: [MenuBarItem]) -> NSImage? {
+        let missingColor = Self.missingColor(for: viewModel.refreshStatus)
+        
         let content = HStack(spacing: 8) {
-            ForEach(devices) { device in
+            ForEach(items) { item in
                 HStack(spacing: 3) {
-                    Image(systemName: device.iconName)
-                    Text("\(device.percentage)%")
+                    Image(systemName: item.iconName)
+                    Text(item.percentage.map { "\($0)%" } ?? "?")
                         .monospacedDigit()
+                        .lineLimit(1)
+                        .fixedSize() // never truncate the percentage
                 }
-                .foregroundStyle(Self.color(for: device))
+                .foregroundStyle(item.percentage.map { Self.color(for: $0) } ?? missingColor)
             }
         }
         .font(.system(size: 13, weight: .medium))
         .padding(.horizontal, 2)
+        .fixedSize() // render the label at its full size
         
         let renderer = ImageRenderer(content: content)
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
@@ -63,11 +68,16 @@ struct MenuBarLabelView: View {
         return image
     }
     
-    private static func color(for device: BatteryDevice) -> Color {
-        switch device.percentage {
+    private static func color(for percentage: Int) -> Color {
+        switch percentage {
         case 0..<20: .red
         case 20..<50: .orange
         default: .green
         }
+    }
+    
+    /// Pink when a successful refresh did not find the device; gray while its state is unknown.
+    private static func missingColor(for status: RefreshStatus) -> Color {
+        status == .succeeded ? .pink : .gray
     }
 }

@@ -10,7 +10,7 @@ import Testing
 
 struct BluetoothBatteryMonitorTests {
 
-    @Test func parsesBluetoothDevices() {
+    @Test func parsesBluetoothDevices() throws {
         
         // Arrange
         let output = """
@@ -24,7 +24,7 @@ struct BluetoothBatteryMonitorTests {
         let monitor = BatteryMonitor()
 
         // Act
-        let devices = monitor.parseOutput(output)
+        let devices = try monitor.parseOutput(output)
 
         // Assert
         #expect(devices.count == 3)
@@ -37,6 +37,23 @@ struct BluetoothBatteryMonitorTests {
 
         #expect(devices[2].name == "AirPods Pro 3 - Yuriy")
         #expect(devices[2].percentage == 80)
+    }
+
+    @Test func validOutputWithoutAccessoriesReturnsEmptyList() throws {
+        let output = """
+        Now drawing from 'AC Power'
+         -InternalBattery-0 (id=36241507) 100%; charged
+        """
+
+        let devices = try BatteryMonitor().parseOutput(output)
+
+        #expect(devices.isEmpty)
+    }
+
+    @Test func unrecognizedOutputThrows() {
+        #expect(throws: BatteryMonitor.FetchError.unrecognizedOutput) {
+            try BatteryMonitor().parseOutput("")
+        }
     }
 
 }
