@@ -19,11 +19,15 @@ struct BluetoothBatteryMonitorApp: App {
             ContentView(viewModel: appDelegate.viewModel)
                 .hidesDockIconWhenClosed()
         }
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
         
         Window("Settings", id: "settings") {
             SettingsView(viewModel: appDelegate.viewModel)
                 .hidesDockIconWhenClosed()
         }
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
         .windowResizability(.contentSize)
     }
 }
